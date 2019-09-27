@@ -1,0 +1,22 @@
+{
+    "Backend" : {
+        "Spark" : ["spark.Spark"],
+        "Spring" : ["org.springframework"]
+    },
+    "Desktop" : {
+        "Swing" : ["javax.swing"],
+        "AWT" : ["java.awt"]
+    },
+    "Frontend" : {
+        "GWT" : ["com.google.gwt"]
+    },
+    "Mobile" : {
+        "Android" : ["android"]
+    },
+    "Machine Learning" : {
+        "Flink" : ["org.apache.flink"],
+        "Mahout" : ["org.apache.mahout"],
+        "Spark" : ["org.apache.spark"],
+        "Deeplearning4j" : ["org.deeplearning4j", "org.datavec"]
+    }
+}
