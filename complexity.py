@@ -46,7 +46,6 @@ def calculate(repo_root, only_files=None):
     result = {}
     for file_elem in root.findall('{http://pmd.sourceforge.net/report/2.0.0}file'):
         path = relativize(root=repo_root, path=file_elem.attrib['name'])
-        print(path)
         if (only_files is not None) and (path not in only_files):
             continue
         cur_result = defaultdict(dict)
@@ -70,7 +69,5 @@ def calculate(repo_root, only_files=None):
 
 
 def calculate_filtered(repo_root, commits):
-    print(commits)
     touched_files = get_touched_files(repo_root, commits)
-    print(touched_files)
     return calculate(repo_root, touched_files)

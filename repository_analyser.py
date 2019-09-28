@@ -4,7 +4,6 @@ import json
 import numpy as np
 import subprocess
 from github import Github
-import datetime
 from config import ACCESS_TOKEN
 import itertools
 from complexity import calculate_filtered
@@ -23,7 +22,7 @@ with open('skills.json') as file:
                 prefix_to_framework[prefix] = framework
                 framework_to_skill[framework] = skill
 
-    framework_to_skill["Library developer"] = "Library developer"
+    # framework_to_skill["Library developer"] = "Library developer"
     id_to_framework = list(framework_to_skill.keys())
     framework_to_id = {framework : i for (i, framework) in enumerate(id_to_framework)}
 
@@ -58,10 +57,15 @@ class User:
 
                         if filename in self.files:
                             self.files[filename] /= self.files[filename].sum()
-                        else:
-                            self.files[filename][-1] = 1.
-                            self.repos["Library developer"].add(repo.name)
-
+                        # else:
+                        #     self.files[filename][-1] = 1.
+                        #     self.repos["Library developer"].add(repo.name)
+        if len(self.files) == 0:
+            return {
+                "Other": {
+                    "Other": 1.
+                }
+            }
 
         weights = {name : 0 for name in self.files}
         for repo in filter(lambda rep: rep.language == 'Java' or rep.language == 'Kotlin', self.g.get_repos()):
@@ -74,7 +78,11 @@ class User:
         try:
             result = np.average(list(self.files.values()), axis=0, weights=list(weights.values()))
         except ZeroDivisionError:
-            return dict()
+            return {
+                "Other": {
+                    "Other": 1.
+                }
+            }
         
         ans = defaultdict(lambda: defaultdict(lambda: 0.))
         for i, val in enumerate(result):

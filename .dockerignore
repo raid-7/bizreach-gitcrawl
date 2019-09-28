@@ -1,6 +1,7 @@
 credentials.txt
 __pycache__
-config.py
 cache
 /dist
+.gitignore
 pmd_ruleset.xml
+Dockerfile
