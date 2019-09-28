@@ -2,7 +2,7 @@
     "Backend" : {
         "Spark" : ["spark.Spark"],
         "Spring" : ["org.springframework"],
-        "RabbitMQ" : ["com.rabbitmq"],
+        "RabbitMQ" : ["com.rabbitmq", "com.aitongyi.rabbitmq"],
         "Kafka": ["org.apache.kafka"],
         "Jetty": ["org.eclipse.jetty"],
         "tomcat" : ["org.apache.tomcat"],
@@ -27,6 +27,7 @@
         "Mahout" : ["org.apache.mahout"],
         "Spark" : ["org.apache.spark"],
         "Deeplearning4j" : ["org.deeplearning4j", "org.datavec"],
-        "KotlinStatistics" : ["org.nield.kotlinstatistics"]
+        "KotlinStatistics" : ["org.nield.kotlinstatistics"],
+        "OpenCV": ["org.opencv"]
     }
 }
