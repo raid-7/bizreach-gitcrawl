@@ -4,7 +4,7 @@ from collections import defaultdict
 import xml.etree.ElementTree as ET
 
 
-PMD_DIR = '/home/v/repo/pmd/pmd-bin-6.18.0'
+PMD_DIR = './dist/pmd-bin-6.18.0'
 
 
 MSG_RE = re.compile(r'.*complexity of (?P<value>\d+).*')
