@@ -97,7 +97,7 @@ class User:
         for repo in filter(lambda rep: rep.language == 'Java' or rep.language == 'Kotlin', self.g.get_repos()):
             for commit in repo.get_commits(author=self.name):
                 for file in commit.files:
-                    filename = f'{repo_root}/{file.filename}'
+                    filename = f'cache/shallow/{self.name}/{repo.name}/{file.filename}'
                     if filename in self.files:
                         weights[filename] += (commit.stats.deletions + commit.stats.additions)
 
