@@ -5,13 +5,9 @@ import numpy as np
 import subprocess
 from github import Github
 import datetime
+from config import ACCESS_TOKEN
+import itertools
 
-
-
-def get_github():
-    with open("credentials.txt", "rt") as f:
-        cred = f.read().strip()
-    return Github(cred)
 
 with open('skills.json') as file:
     skills = json.load(file)
@@ -27,8 +23,8 @@ with open('skills.json') as file:
 
 
 class User:
-    def __init__(self, name):
-        self.g = get_github().get_user(name)
+    def __init__(self, name, access_token=ACCESS_TOKEN):
+        self.g = Github(access_token).get_user(name)
         self.name = name
         self.files = dict()
         self.frameworks = dict()
@@ -41,13 +37,13 @@ class User:
                 root += '/'
                 for file in filter(lambda file: file.endswith('.java'), files):
                     filename = repo.name + root[len(repo.name) + 1:] + file
-                    with open(root + file, 'r') as f:
-                        for line in f:
+                    with open(root + file, 'rb') as f:
+                        for line in f.read().split(b'\n'):
                             line = line.strip()
-                            if line.startswith('import'):
+                            if line.startswith(b'import'):
                                 import_name = line[6:].strip()[:-1]
                                 for (prefix, (skill, framework)) in prefix_to_skill.items():
-                                    if import_name.startswith(prefix):
+                                    if import_name.startswith(prefix.encode('utf-8')):
                                         if filename not in self.files:
                                             self.files[filename] = np.array([0 for _ in id_to_skill], dtype=np.float64)
                                             self.frameworks[skill] = set()
@@ -89,4 +85,14 @@ class User:
         return [{'login': login, 'info': info} for (login, info) in result.items()]
 
 
-# print(User(sys.argv[1]).best_skills())
+    def info(self):
+        return {
+            "avatar": self.g.avatar_url,
+            "bio": self.g.bio,
+            "name": self.g.name,
+            "n_repos": len(list(self.g.get_repos())),
+            "n_commits": len(list(itertools.chain(*list(map(lambda repo: repo.get_commits(author=self.name), list(self.g.get_repos()))))))    
+        }
+
+
+# print(User(sys.argv[1]).info())

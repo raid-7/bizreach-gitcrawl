@@ -5,13 +5,15 @@
     },
     "Desktop" : {
         "Swing" : ["javax.swing"],
-        "AWT" : ["java.awt"]
+        "AWT" : ["java.awt"],
+        "JFeonix" : ["com.jfoenix"]
     },
     "Frontend" : {
         "GWT" : ["com.google.gwt"]
     },
     "Mobile" : {
-        "Android" : ["android"]
+        "Android" : ["android"],
+        "Microedition" : ["javax.microedition"]
     },
     "Machine Learning" : {
         "Flink" : ["org.apache.flink"],
