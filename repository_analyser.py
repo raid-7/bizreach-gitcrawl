@@ -7,29 +7,31 @@ from github import Github
 import datetime
 from config import ACCESS_TOKEN
 import itertools
+from collections import defaultdict
 
 
 with open('skills.json') as file:
     skills = json.load(file)
 
-    prefix_to_skill = dict()
+    prefix_to_framework = dict()
+    framework_to_skill = dict()
+
     for (skill, frameworks) in skills.items():
         for (framework, prefixes) in frameworks.items():
             for prefix in prefixes:
-                prefix_to_skill[prefix] = (skill, framework)
+                prefix_to_framework[prefix] = framework
+                framework_to_skill[framework] = skill
 
-    id_to_skill = list(skills.keys())
-    skill_to_id = {skill : i for (i, skill) in enumerate(id_to_skill)}
+    framework_to_skill["Library developer"] = "Library developer"
+    id_to_framework = list(framework_to_skill.keys())
+    framework_to_id = {framework : i for (i, framework) in enumerate(id_to_framework)}
 
-    id_to_skill += ["Lib"]
-    skill_to_id["Lib"] = len(id_to_skill) - 1
 
 class User:
     def __init__(self, name, access_token=ACCESS_TOKEN):
         self.g = Github(access_token).get_user(name)
         self.name = name
-        self.files = dict()
-        self.frameworks = {"Lib":{}}
+        self.files = defaultdict(lambda: np.zeros(len(id_to_framework)))
 
 
     def best_skills(self):
@@ -44,23 +46,18 @@ class User:
                             line = line.strip()
                             if line.startswith(b'import'):
                                 import_name = line[6:].strip()[:-1]
-                                for (prefix, (skill, framework)) in prefix_to_skill.items():
+                                for (prefix, framework) in prefix_to_framework.items():
                                     if import_name.startswith(prefix.encode('utf-8')):
-                                        if filename not in self.files:
-                                            self.files[filename] = np.array([0 for _ in id_to_skill], dtype=np.float64)
-                                            self.frameworks[skill] = set()
+                                        self.files[filename][framework_to_id[framework]] += 1
 
-                                        self.files[filename][skill_to_id[skill]] += 1
-                                        self.frameworks[skill].add(framework)
                         if filename in self.files:
                             self.files[filename] /= self.files[filename].sum()
                         else:
-                            self.files[filename] = np.array([0 for _ in id_to_skill], dtype=np.float64)
                             self.files[filename][-1] = 1.
 
-            subprocess.run(['rm', '-rf', repo.name])
+            subprocess.run(['rm', '-rf', '--', repo.name])
 
-        if len(self.frameworks) == 0:
+        if len(self.files) == 0:
             return dict()
 
         weights = {name : 0 for name in self.files}
@@ -75,13 +72,13 @@ class User:
             result = np.average(list(self.files.values()), axis=0, weights=list(weights.values()))
         except ZeroDivisionError:
             return dict()
+        
+        ans = defaultdict(lambda: defaultdict(lambda: 0.))
+        for i, val in enumerate(result):
+            if val > 0:
+                ans[framework_to_skill[id_to_framework[i]]][id_to_framework[i]] = val
 
-        best_ids = result.argsort()
-        return {
-            id_to_skill[i] : {
-                'prob': result[i], 
-                'frameworks': list(self.frameworks[id_to_skill[i]])
-            } for i in filter(lambda i : result[i] > 0., best_ids)}
+        return ans
 
 
     def teammates(self):
