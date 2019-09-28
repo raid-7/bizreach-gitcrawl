@@ -156,6 +156,7 @@ $(document).ready(function() {
                 .show();
         } else {
             $("#content .user-info").hide().children().remove();
+            $("#content .detailed-info").hide();
         }
     }
 
