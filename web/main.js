@@ -86,10 +86,11 @@ $(document).ready(function() {
     function makeEngineerPie(competences) {
         let pieCont = $("#engineer-pie-container");
         if (!competences) {
+            savedCompetence = null;
             pieCont.children().remove();
-            $("#right-panel .user-info").children.remove();
-            $("#right-panel .detailed-info .framework-info").children.remove();
-            $("#right-panel .detailed-info .repo-info").children.remove();
+            $("#right-panel .detailed-info .framework-info").children().remove();
+            $("#right-panel .detailed-info .repo-info").children().remove();
+            $("#repo-complexities-container").children().remove();
             return;
         }
         pieCont.append($('<canvas id="engineer-pie" width="400" height="400"></canvas>'));
@@ -237,6 +238,9 @@ $(document).ready(function() {
         $.ajax("/info?user=" + username, {
             method: "GET",
             success: function(data) {
+                if (lastUsername != username)
+                    return;
+
                 makeUserInfo(data);
                 progressStatus.target += 45;
             },
@@ -251,6 +255,9 @@ $(document).ready(function() {
         $.ajax('/complexities?user=' + username + '&repo=' + repo, {
             method: "GET",
             success: function(data) {
+                if (lastUsername != username)
+                    return;
+
                 progressStatus.target = 100;
                 res = [];
                 for (let filename of Object.getOwnPropertyNames(data))
@@ -277,6 +284,9 @@ $(document).ready(function() {
         $.ajax("/best_skills?user=" + username, {
             method: "GET",
             success: function(data) {
+                if (lastUsername != username)
+                    return;
+                
                 console.log(data);
                 makeEngineerPie(data);
                 progressStatus.target += 45;
