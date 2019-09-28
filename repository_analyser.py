@@ -59,14 +59,17 @@ class User:
 
         weights = {name : 0 for name in self.files}
         for repo in  filter(lambda repo: repo.language == 'Java', self.g.get_repos()):
-            for commit in repo.get_commits(since=datetime.datetime.now()+datetime.timedelta(days=-365*2),
-                                           author=self.name):
+            for commit in repo.get_commits(author=self.name):
                 for file in commit.files:
                     filename = repo.name + file.filename
                     if filename in self.files:
                         weights[filename] += (commit.stats.deletions + commit.stats.additions)
 
-        result = np.average(list(self.files.values()), axis=0, weights=list(weights.values()))
+        try:
+            result = np.average(list(self.files.values()), axis=0, weights=list(weights.values()))
+        except ZeroDivisionError:
+            return dict()
+
         best_ids = result.argsort()
         return {
             id_to_skill[i] : {
@@ -82,7 +85,7 @@ class User:
                 if contributor.login not in result:
                     result[contributor.login] = User(contributor.login).best_skills()
 
-        return [{'login': login, 'info': info} for (login, info) in result.items()]
+        return [{'login': login, 'info': info} for (login, info) in result.items() if len(info) > 0]
 
 
     def info(self):
