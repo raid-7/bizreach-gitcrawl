@@ -39,10 +39,10 @@ class User:
         for repo in filter(lambda rep: rep.language == 'Java' or rep.language == 'Kotlin', self.g.get_repos()):
             subprocess.run(['mkdir', '-p', 'cache'])
             subprocess.run(['git', 'clone', '--depth', '1', '--single-branch', f'https://github.com/{self.name}/{repo.name}', f'./cache/{repo.name}'])
-            for root, _, files in os.walk(repo.name):
+            for root, _, files in os.walk('cache/' + repo.name):
                 root += '/'
                 for file in filter(lambda file: file.endswith('.java') or file.endswith('.kt'), files):
-                    filename = repo.name + root[len(repo.name) + 1:] + file
+                    filename = repo.name + root[len('cache/') + len(repo.name) + 1:] + file
                     with open(root + file, 'rb') as f:
                         for line in f.read().split(b'\n'):
                             line = line.strip()
@@ -59,8 +59,6 @@ class User:
                             self.files[filename][-1] = 1.
                             self.repos["Library developer"].add(repo.name)
 
-        if len(self.files) == 0:
-            return dict()
 
         weights = {name : 0 for name in self.files}
         for repo in filter(lambda rep: rep.language == 'Java' or rep.language == 'Kotlin', self.g.get_repos()):
