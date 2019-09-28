@@ -7,6 +7,7 @@ $(document).ready(function() {
         current: 0,
         target: 0
     };
+    let selectedRepoElem = null;
 
     setInterval(function() {
         if (progressStatus.current != progressStatus.target) {
@@ -52,12 +53,34 @@ $(document).ready(function() {
                 let expireienceValue = Math.round(parseFloat(highlightedCompetence.index[v]) * 100);
                 cont.append('<div>' + v + ": " + expireienceValue + '</div>');
             }
+            makeRepos(lastUsername, highlightedCompetence.index['repos']);
             $("#content .detailed-info").show();
         }
     }
 
-    function uiRepo(info) {
-        return $();
+    function uiRepo(username, repoName) {
+        if (selectedRepoElem && selectedRepoElem.text() == repoName)
+            return selectedRepoElem;
+
+        let el = $('<div class="repo-item">' + repoName + '</div>');
+        el.on('click', function() {
+            loadRepoComplexities(username, repoName);
+            el.addClass('selected');
+            if (selectedRepoElem) {
+                selectedRepoElem.removeClass("selected");
+            }
+            selectedRepoElem = el;
+        });
+        return el;
+    }
+
+    function makeRepos(username, repos) {
+        let cont = $('.repo-info');
+        cont.children().remove();
+        for (let repo of repos) {
+            let repoElem = uiRepo(username, repo);
+            cont.append(repoElem);
+        }
     }
 
     function makeEngineerPie(competences) {
@@ -133,6 +156,62 @@ $(document).ready(function() {
         }
     }
 
+    function makeRepoComplexities(cmpx) {
+        let width = 600;
+        let height = 300;
+        let i = 0;
+
+        const root = d3.pack(cmpx)
+            .size([width - 2, height - 2])
+            .padding(3)
+        (d3.hierarchy({children: cmpx})
+            .sum(d => d.complexity));
+        console.log(cmpx, root);
+
+        const svg = d3.create("svg")
+          .attr("viewBox", [0, 0, width, height])
+          .attr("font-size", 10)
+          .attr("font-family", "sans-serif")
+          .attr("text-anchor", "middle");
+
+        const leaf = svg.selectAll("g")
+        .data(root.leaves())
+        .join("g")
+          .attr("transform", d => `translate(${d.x + 1},${d.y + 1})`);
+
+        leaf.append("circle")
+          .attr("id", d => (d.leafUid = ("" + i++)).id)
+          .attr("r", d => d.r)
+          .attr("fill-opacity", 0.7)
+          .attr("fill", d => 'red');
+
+        leaf.append("clipPath")
+          .attr("id", d => (d.clipUid = ("" + i++)).id)
+        .append("use")
+          .attr("xlink:href", d => d.leafUid.href);
+
+        leaf.append("text")
+          .attr("clip-path", d => d.clipUid)
+        .selectAll("tspan")
+        .data(d => d.data.name.split(/(?=[A-Z][^A-Z])/g))
+        .join("tspan")
+          .attr("x", 0)
+          .attr("y", (d, i, nodes) => `${i - nodes.length / 2 + 0.8}em`)
+          .text(d => d);
+
+        leaf.append("title")
+          .text(d => `${d.data.title}\n${d.value}`);
+
+        let chart = svg.node();
+
+        let cont = $('#repo-complexities-container');
+        cont.children().remove();
+        cont.append(chart);
+
+        svg.style.width = width + "px";
+        svg.style.width = height + "px";
+    }
+
     function loadUserNamePicture(username) {
         $.ajax("/info?user=" + username, {
             method: "GET",
@@ -145,6 +224,28 @@ $(document).ready(function() {
             }
         });
         makeUserInfo(null);
+    }
+
+    function loadRepoComplexities(username, repo) {
+        $.ajax('/complexities?user=' + username + '&repo=' + repo, {
+            method: "GET",
+            success: function(data) {
+                progressStatus.target = 100;
+                res = [];
+                for (let filename of Object.getOwnPropertyNames(data))
+                    for (let classname of Object.getOwnPropertyNames(data[filename])) {
+                        res.push({
+                            "name" : classname,
+                            "complexity" : data[filename][classname]['~proper~']
+                        });
+                    }
+                makeRepoComplexities(res);
+            },
+            error: function(data) {
+                console.log(data);
+            }
+        });
+        progressStatus.target = 50;
     }
 
     function loadUserPie(username) {
@@ -167,6 +268,8 @@ $(document).ready(function() {
             return;
         lastUsername = username;
         progressStatus.target = 10;
+
+        selectedRepoElem = null;
 
         loadUserNamePicture(username);
         loadUserPie(username);
