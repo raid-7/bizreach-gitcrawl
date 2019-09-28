@@ -12,7 +12,7 @@ app.config["DEBUG"] = True
 @app.route('/', methods=['GET'])
 def start():
     return redirect('/index.html')
-    
+
 
 @app.route('/best_skills', methods=['GET'])
 def best_skills():
@@ -37,5 +37,11 @@ def info():
     else:
         return "Error: <user> arg is not provided"
 
+@app.route('/complexities', methods=['GET'])
+def complexities():
+    if 'user' in request.args and 'repo' in request.args:
+        return jsonify(User(request.args['user']).get_repo_complexities(request.args['repo']))
+    else:
+        return 'Error'
 
 app.run()

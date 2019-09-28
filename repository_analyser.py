@@ -7,6 +7,7 @@ from github import Github
 import datetime
 from config import ACCESS_TOKEN
 import itertools
+from complexity import calculate_filtered
 from collections import defaultdict
 
 
@@ -39,6 +40,8 @@ class User:
         for repo in filter(lambda rep: rep.language == 'Java' or rep.language == 'Kotlin', self.g.get_repos()):
             subprocess.run(['mkdir', '-p', 'cache'])
             subprocess.run(['git', 'clone', '--depth', '1', '--single-branch', f'https://github.com/{self.name}/{repo.name}', f'./cache/{repo.name}'])
+            subprocess.run(['git', '-C', f'cache/{repo.name}', 'fetch'])
+
             for root, _, files in os.walk('cache/' + repo.name):
                 root += '/'
                 for file in filter(lambda file: file.endswith('.java') or file.endswith('.kt'), files):
@@ -102,8 +105,17 @@ class User:
             "n_commits": len(list(itertools.chain(*list(map(lambda repo: repo.get_commits(author=self.name), list(self.g.get_repos()))))))    
         }
 
+
     def get_all_commits(self, repo_name):
         return list(map(lambda commit: commit.sha, self.g.get_repo(repo_name).get_commits(author=self.name)))
+
+
+    def get_repo_complexities(self, repo_name):
+        subprocess.run(['mkdir', '-p', 'cache'])
+        subprocess.run(['git', 'clone', f'https://github.com/{self.name}/{repo_name}', f'./cache/{repo_name}'])
+        subprocess.run(['git', '-C', repo_name, 'fetch', '--unshallow'])
+        return calculate_filtered(f'cache/{repo_name}', self.get_all_commits(repo_name))
+
 
 
 # print(User(sys.argv[1]).get_all_commits(sys.argv[2]))

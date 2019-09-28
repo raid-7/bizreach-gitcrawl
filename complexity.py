@@ -2,6 +2,7 @@ import subprocess
 import re
 from collections import defaultdict
 import xml.etree.ElementTree as ET
+import os
 
 
 PMD_DIR = './dist/pmd-bin-6.18.0'
@@ -37,6 +38,7 @@ def get_touched_files(repo_root, commits):
 
 
 def calculate(repo_root, only_files=None):
+    repo_root = os.path.abspath(repo_root)
     proc = subprocess.run(
         [f'{PMD_DIR}/bin/run.sh', 'pmd', '-d', repo_root, '-f', 'xml', '-R', 'pmd_ruleset.xml'],
         stdout=subprocess.PIPE)
@@ -44,6 +46,7 @@ def calculate(repo_root, only_files=None):
     result = {}
     for file_elem in root.findall('{http://pmd.sourceforge.net/report/2.0.0}file'):
         path = relativize(root=repo_root, path=file_elem.attrib['name'])
+        print(path)
         if (only_files is not None) and (path not in only_files):
             continue
         cur_result = defaultdict(dict)
@@ -67,5 +70,7 @@ def calculate(repo_root, only_files=None):
 
 
 def calculate_filtered(repo_root, commits):
+    print(commits)
     touched_files = get_touched_files(repo_root, commits)
+    print(touched_files)
     return calculate(repo_root, touched_files)
