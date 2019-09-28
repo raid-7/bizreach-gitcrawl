@@ -32,6 +32,7 @@ class User:
         self.g = Github(access_token).get_user(name)
         self.name = name
         self.files = defaultdict(lambda: np.zeros(len(id_to_framework)))
+        self.repos = defaultdict(lambda: set())
 
 
     def best_skills(self):
@@ -49,11 +50,13 @@ class User:
                                 for (prefix, framework) in prefix_to_framework.items():
                                     if import_name.startswith(prefix.encode('utf-8')):
                                         self.files[filename][framework_to_id[framework]] += 1
+                                        self.repos[framework_to_skill[framework]].add(repo.name)
 
                         if filename in self.files:
                             self.files[filename] /= self.files[filename].sum()
                         else:
                             self.files[filename][-1] = 1.
+                            self.repos["Library developer"].add(repo.name)
 
             subprocess.run(['rm', '-rf', '--', repo.name])
 
@@ -75,8 +78,10 @@ class User:
         
         ans = defaultdict(lambda: defaultdict(lambda: 0.))
         for i, val in enumerate(result):
+            skill = framework_to_skill[id_to_framework[i]]
             if val > 0:
-                ans[framework_to_skill[id_to_framework[i]]][id_to_framework[i]] = val
+                ans[skill][id_to_framework[i]] = val
+                ans[skill]["repos"] = list(self.repos[skill])
 
         return ans
 
