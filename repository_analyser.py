@@ -21,18 +21,20 @@ with open('skills.json') as file:
     id_to_skill = list(skills.keys())
     skill_to_id = {skill : i for (i, skill) in enumerate(id_to_skill)}
 
+    id_to_skill += ["Lib"]
+    skill_to_id["Lib"] = len(id_to_skill) - 1
 
 class User:
     def __init__(self, name, access_token=ACCESS_TOKEN):
         self.g = Github(access_token).get_user(name)
         self.name = name
         self.files = dict()
-        self.frameworks = dict()
+        self.frameworks = {"Lib":{}}
 
 
     def best_skills(self):
         for repo in filter(lambda rep: rep.language == 'Java', self.g.get_repos()):
-            subprocess.run(['git', 'clone', f'https://github.com/{self.name}/{repo.name}'])
+            subprocess.run(['git', 'clone', '--depth', '1', '--single-branch', f'https://github.com/{self.name}/{repo.name}'])
             for root, _, files in os.walk(repo.name):
                 root += '/'
                 for file in filter(lambda file: file.endswith('.java'), files):
@@ -52,6 +54,10 @@ class User:
                                         self.frameworks[skill].add(framework)
                         if filename in self.files:
                             self.files[filename] /= self.files[filename].sum()
+                        else:
+                            self.files[filename] = np.array([0 for _ in id_to_skill], dtype=np.float64)
+                            self.files[filename][-1] = 1.
+
             subprocess.run(['rm', '-rf', repo.name])
 
         if len(self.frameworks) == 0:

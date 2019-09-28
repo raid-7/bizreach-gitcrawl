@@ -1,10 +1,18 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, redirect
 from repository_analyser import User
 
 
-app = Flask(__name__)
+app = Flask(__name__,
+            static_url_path='', 
+            static_folder='web')
 app.config["DEBUG"] = True
 
+
+
+@app.route('/', methods=['GET'])
+def start():
+    return redirect('/index.html')
+    
 
 @app.route('/best_skills', methods=['GET'])
 def best_skills():
