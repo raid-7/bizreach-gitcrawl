@@ -14,8 +14,9 @@ $(document).ready(function() {
             progressStatus.current += Math.min(4 * Math.sign(diff), diff);
         } else if (progressStatus.target == 100) {
             progressStatus.target = 0;
-            progressStatus.current = 0;
-        } else return;
+        }
+        if (progressStatus.current > progressStatus.target)
+            progressStatus.current = progressStatus.target;
         document.querySelector("#username .progressbar").style.width = progressStatus.current + "%";
     }, 40);
 
@@ -23,7 +24,7 @@ $(document).ready(function() {
         if (highlightedCompetence.index === index && highlightedCompetence.fixed == fixed)
             return;
 
-        if (index === null) {
+        if (index === null || index === undefined) {
             // hide
             if (savedCompetence) {
                 highlightedCompetence = {index: savedCompetence.index, fixed: savedCompetence.fixed};
@@ -39,22 +40,35 @@ $(document).ready(function() {
             highlightedCompetence.fixed = fixed;
         }
 
-        console.log(highlightedCompetence, savedCompetence);
-
-        if (highlightedCompetence.index === null)
+        if (highlightedCompetence.index === null || index === undefined)
             $("#content .detailed-info").hide();
         else {
             let cont = $("#content .detailed-info .framework-info");
             cont.children().remove();
+
             for (let v of Object.getOwnPropertyNames(highlightedCompetence.index)) {
-                cont.append('<div>' + v + ": " + highlightedCompetence.index[v] + '</div>');
+                if (Array.isArray(highlightedCompetence.index[v]))
+                    continue;
+                let expireienceValue = Math.round(parseFloat(highlightedCompetence.index[v]) * 100);
+                cont.append('<div>' + v + ": " + expireienceValue + '</div>');
             }
             $("#content .detailed-info").show();
         }
     }
 
+    function uiRepo(info) {
+        return $();
+    }
+
     function makeEngineerPie(competences) {
+        let pieCont = $("#engineer-pie-container");
+        if (!competences) {
+            pieCont.children().remove();
+            return;
+        }
+        pieCont.append($('<canvas id="engineer-pie" width="400" height="400"></canvas>'));
         let ctx = document.getElementById('engineer-pie');
+
         let cColors = [
             'rgba(255, 99, 132, 1)',
             'rgba(54, 162, 235, 1)',
@@ -69,7 +83,11 @@ $(document).ready(function() {
         let i = 0;
         for (p of Object.getOwnPropertyNames(competences)) {
             let area = competences[p];
-            data[i] = Object.getOwnPropertyNames(area).map((v) => parseInt(area[v])).reduce((a, b) => a + b, 0);
+            data[i] = Object.getOwnPropertyNames(area)
+                .filter((v) => !Array.isArray(area[v]))
+                .map((v) => parseFloat(area[v]));
+            data[i] = data[i].reduce((a, b) => a + b, 0);
+            data[i] = Math.round(data[i] * 100);
             labels[i] = p;
             i++;
         }
@@ -96,59 +114,71 @@ $(document).ready(function() {
     }
 
     function makeUserInfo(data) {
-        $("#content .user-info")
-            .append($('<div><img src="' + data.picture + '"><h4>' + data.name.replace(/\s+/, "<br>") + '</h4></div>'))
-            .append($('<div>' + data.num_repos + ' REPOSITORIES</div>'))
-            .append($('<div>' + data.num_commits + ' COMMITS</div>'))
-            .show();
+        if (data) {
+            let imgnameElem = $('<div></div>');
+            imgnameElem.append($('<img src="' + data.avatar + '">'));
+            if (data.name) {
+                let nameElem = $('<h4></h4>');
+                nameElem.text(data.name);
+                nameElem.html(nameElem.html().trim().replace(/\s+/, "<br>"));
+                imgnameElem.append(nameElem);
+            }
+            $("#content .user-info")
+                .append(imgnameElem)
+                .append($('<div>' + data.n_repos + ' REPOSITORIES</div>'))
+                .append($('<div>' + data.n_commits + ' COMMITS</div>'))
+                .show();
+        } else {
+            $("#content .user-info").hide().children().remove();
+        }
     }
 
     function loadUserNamePicture(username) {
-        makeUserInfo({
-            picture: "https://avatars3.githubusercontent.com/u/5462697?s=460&v=4",
-            name: "Victor Krapivenskiy",
-            num_repos: 13,
-            num_commits: 340
+        $.ajax("/info?user=" + username, {
+            method: "GET",
+            success: function(data) {
+                makeUserInfo(data);
+                progressStatus.target += 45;
+            },
+            error: function(data) {
+                console.log(data);
+            }
         });
+        makeUserInfo(null);
+    }
+
+    function loadUserPie(username) {
+        $.ajax("/best_skills?user=" + username, {
+            method: "GET",
+            success: function(data) {
+                console.log(data);
+                makeEngineerPie(data);
+                progressStatus.target += 45;
+            },
+            error: function(data) {
+                console.log(data);
+            }
+        });
+        makeEngineerPie(null);
     }
 
     function loadUserInfo(username) {
-        if (lastUsername == username)
+        if (lastUsername == username || !username)
             return;
         lastUsername = username;
+        progressStatus.target = 10;
 
-        loadUserNamePicture();
-        makeEngineerPie({
-            "Backend" : {
-                "Spark" : 5,
-                "Spring" : 10
-            },
-            "Desktop" : {
-                "Swing" : 8,
-                "AWT" : 12
-            },
-            "Frontend" : {
-                "GWT" : 34
-            },
-            "Mobile" : {
-                "Android" : 2
-            },
-            "Machine Learning" : {
-                "Flink" : 50,
-                "Mahout" : 20,
-                "Spark" : 20,
-                "Deeplearning4j" : 3
-            }
-        });
+        loadUserNamePicture(username);
+        loadUserPie(username);
     }
 
-    let usernameInput = $('#username');
+    let usernameInput = $('#username input');
     usernameInput.on("keydown", function(ev) {
         if (ev.keyCode == 13)
-            loadUserInfo(usernameInput.text());
+            loadUserInfo(usernameInput.val());
     });
     usernameInput.focusout(function(ev) {
-       loadUserInfo(usernameInput.text()); 
+       loadUserInfo(usernameInput.val()); 
     });
     usernameInput.focus();
 });
