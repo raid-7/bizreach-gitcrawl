@@ -118,3 +118,14 @@ body {
     border-top: 1px solid grey;
     font-weight: bold;
 }
+
+#content .repo-info .repo-item {
+    padding: 2px;
+}
+
+#content .repo-info .repo-item:hover {
+    background-color: #f1f1f1;
+}
+#content .repo-info .repo-item.selected {
+    background-color: #c8c8c8;
+}
