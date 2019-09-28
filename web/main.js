@@ -87,6 +87,9 @@ $(document).ready(function() {
         let pieCont = $("#engineer-pie-container");
         if (!competences) {
             pieCont.children().remove();
+            $("#right-panel .user-info").children.remove();
+            $("#right-panel .detailed-info .framework-info").children.remove();
+            $("#right-panel .detailed-info .repo-info").children.remove();
             return;
         }
         pieCont.append($('<canvas id="engineer-pie" width="400" height="400"></canvas>'));
