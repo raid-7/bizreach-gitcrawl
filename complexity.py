@@ -33,6 +33,9 @@ def get_touched_files(repo_root, commits):
                 path = line.rstrip()
                 if path:
                     result.add(path.decode())
+            proc.wait()
+            if proc.returncode != 0:
+                raise ValueError(f'git exited with code {proc.returncode}')
 
     return result
 

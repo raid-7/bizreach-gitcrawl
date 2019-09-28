@@ -10,6 +10,22 @@ from complexity import calculate_filtered
 from collections import defaultdict
 
 
+def clone_repo(user, repo, shallow):
+    cache_dir = 'cache/shallow' if shallow else 'cache/full'
+    clone_args = ['--depth=1', '--single-branch'] if shallow else []
+
+    user_dir = f'{cache_dir}/{user}'
+    os.makedirs(user_dir, exist_ok=True)
+    result = f'{user_dir}/{repo}'
+    if os.path.exists(result):
+        subprocess.run(['git', '-C', result, 'fetch'], check=True)
+    else:
+        subprocess.run(
+            ['git', 'clone', *clone_args, f'https://github.com/{user}/{repo}', result],
+            check=True)
+    return result
+
+
 with open('skills.json') as file:
     skills = json.load(file)
 
@@ -37,15 +53,11 @@ class User:
 
     def best_skills(self):
         for repo in filter(lambda rep: rep.language == 'Java' or rep.language == 'Kotlin', self.g.get_repos()):
-            subprocess.run(['mkdir', '-p', 'cache'])
-            subprocess.run(['git', 'clone', '--depth', '1', '--single-branch', f'https://github.com/{self.name}/{repo.name}', f'./cache/{repo.name}'])
-            subprocess.run(['git', '-C', f'cache/{repo.name}', 'fetch'])
-
-            for root, _, files in os.walk('cache/' + repo.name):
-                root += '/'
+            repo_root = clone_repo(self.name, repo.name, shallow=True)
+            for root, _, files in os.walk(repo_root):
                 for file in filter(lambda file: file.endswith('.java') or file.endswith('.kt'), files):
-                    filename = repo.name + root[len('cache/') + len(repo.name) + 1:] + file
-                    with open(root + file, 'rb') as f:
+                    filename = f'{root}/{file}'
+                    with open(filename, 'rb') as f:
                         for line in f.read().split(b'\n'):
                             line = line.strip()
                             if line.startswith(b'import'):
@@ -71,7 +83,7 @@ class User:
         for repo in filter(lambda rep: rep.language == 'Java' or rep.language == 'Kotlin', self.g.get_repos()):
             for commit in repo.get_commits(author=self.name):
                 for file in commit.files:
-                    filename = repo.name + file.filename
+                    filename = f'{repo_root}/{file.filename}'
                     if filename in self.files:
                         weights[filename] += (commit.stats.deletions + commit.stats.additions)
 
@@ -83,7 +95,7 @@ class User:
                     "Other": 1.
                 }
             }
-        
+
         ans = defaultdict(lambda: defaultdict(lambda: 0.))
         for i, val in enumerate(result):
             skill = framework_to_skill[id_to_framework[i]]
@@ -119,10 +131,8 @@ class User:
 
 
     def get_repo_complexities(self, repo_name):
-        subprocess.run(['mkdir', '-p', 'cache'])
-        subprocess.run(['git', 'clone', f'https://github.com/{self.name}/{repo_name}', f'./cache/{repo_name}'])
-        subprocess.run(['git', '-C', repo_name, 'fetch', '--unshallow'])
-        return calculate_filtered(f'cache/{repo_name}', self.get_all_commits(repo_name))
+        repo_root = clone_repo(self.name, repo_name, shallow=False)
+        return calculate_filtered(repo_root, self.get_all_commits(repo_name))
 
 
 
