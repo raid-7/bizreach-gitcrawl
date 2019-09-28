@@ -2,7 +2,7 @@ import os
 import sys
 import json
 import subprocess
-from github import Github
+from github import Github, GithubException
 from config import ACCESS_TOKEN
 import itertools
 from complexity import calculate_filtered
@@ -95,11 +95,14 @@ class User:
 
         weights = {name: 0 for name in self.files}
         for repo in filter(lambda rep: rep.language == 'Java' or rep.language == 'Kotlin', self.g.get_repos()):
-            for commit in repo.get_commits(author=self.name):
-                for file in commit.files:
-                    filename = f'cache/shallow/{self.name}/{repo.name}/{file.filename}'
-                    if filename in self.files:
-                        weights[filename] += (commit.stats.deletions + commit.stats.additions)
+            try:
+                for commit in repo.get_commits(author=self.name):
+                    for file in commit.files:
+                        filename = f'cache/shallow/{self.name}/{repo.name}/{file.filename}'
+                        if filename in self.files:
+                            weights[filename] += (commit.stats.deletions + commit.stats.additions)
+            except GithubException:
+                pass
 
         try:
             result = np_average(list(self.files.values()), weights=list(weights.values()))
@@ -129,14 +132,21 @@ class User:
 
         return [{'login': login, 'info': info} for (login, info) in result.items() if len(info) > 0]
 
+    def try_get_commits(self, repo):
+        print('TGC', repo)
+        try:
+            return list(repo.get_commits(author=self.name))
+        except GithubException:
+            return []
 
     def info(self):
+        repos = list(self.g.get_repos())
         return {
             "avatar": self.g.avatar_url,
             "bio": self.g.bio,
             "name": self.g.name,
-            "n_repos": len(list(self.g.get_repos())),
-            "n_commits": len(list(itertools.chain(*list(map(lambda repo: repo.get_commits(author=self.name), list(self.g.get_repos()))))))    
+            "n_repos": len(repos),
+            "n_commits": len(list(itertools.chain(*list(map(lambda repo: self.try_get_commits(repo), repos)))))    
         }
 
 
