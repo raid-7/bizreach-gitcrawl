@@ -53,12 +53,31 @@ body {
     bottom: 0;
     margin: 0;
     padding: 0;
+
+    cursor: text;
 }
 
-#content>div {
+#content {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: stretch;
+}
+
+#main-content, #repo-complexities-container {
+    flex-grow: 0;
+    flex-shrink: 0;
+}
+
+#repo-complexities-container {
+    max-width: 800px;
+}
+
+#main-content {
     display: flex;
     flex-direction: row;
     justify-content: space-between;
+    margin-bottom: 36px;
 }
 
 #content #right-panel {
@@ -121,6 +140,7 @@ body {
 
 #content .repo-info .repo-item {
     padding: 2px;
+    cursor: pointer;
 }
 
 #content .repo-info .repo-item:hover {
