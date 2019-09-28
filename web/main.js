@@ -319,6 +319,8 @@ $(document).ready(function() {
 
         loadUserNamePicture(username);
         loadUserPie(username);
+
+        $('#repo-complexities-container').empty();
     }
 
     let usernameInput = $('#username input');

@@ -10,4 +10,4 @@ RUN apt-get update && apt-get install -y openjdk-11-jre
 
 COPY . /app
 
-CMD ["python3", "api.py"]
+CMD ["gunicorn", "-b", "0.0.0.0:5000", "-w", "8", "--threads", "12", "api"]
