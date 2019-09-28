@@ -36,11 +36,12 @@ class User:
 
 
     def best_skills(self):
-        for repo in filter(lambda rep: rep.language == 'Java', self.g.get_repos()):
-            subprocess.run(['git', 'clone', '--depth', '1', '--single-branch', f'https://github.com/{self.name}/{repo.name}'])
+        for repo in filter(lambda rep: rep.language == 'Java' or rep.language == 'Kotlin', self.g.get_repos()):
+            subprocess.run(['mkdir', '-p', 'cache'])
+            subprocess.run(['git', 'clone', '--depth', '1', '--single-branch', f'https://github.com/{self.name}/{repo.name}', f'./cache/{repo.name}'])
             for root, _, files in os.walk(repo.name):
                 root += '/'
-                for file in filter(lambda file: file.endswith('.java'), files):
+                for file in filter(lambda file: file.endswith('.java') or file.endswith('.kt'), files):
                     filename = repo.name + root[len(repo.name) + 1:] + file
                     with open(root + file, 'rb') as f:
                         for line in f.read().split(b'\n'):
@@ -58,13 +59,11 @@ class User:
                             self.files[filename][-1] = 1.
                             self.repos["Library developer"].add(repo.name)
 
-            subprocess.run(['rm', '-rf', '--', repo.name])
-
         if len(self.files) == 0:
             return dict()
 
         weights = {name : 0 for name in self.files}
-        for repo in  filter(lambda repo: repo.language == 'Java', self.g.get_repos()):
+        for repo in filter(lambda rep: rep.language == 'Java' or rep.language == 'Kotlin', self.g.get_repos()):
             for commit in repo.get_commits(author=self.name):
                 for file in commit.files:
                     filename = repo.name + file.filename
@@ -88,7 +87,7 @@ class User:
 
     def teammates(self):
         result = {}
-        for repo in filter(lambda rep: rep.language == 'Java', self.g.get_repos()):
+        for repo in filter(lambda rep: rep.language == 'Java' or rep.language == 'Kotlin', self.g.get_repos()):
             for contributor in filter(lambda user: user.login != self.name, repo.get_contributors()):
                 if contributor.login not in result:
                     result[contributor.login] = User(contributor.login).best_skills()
@@ -105,5 +104,8 @@ class User:
             "n_commits": len(list(itertools.chain(*list(map(lambda repo: repo.get_commits(author=self.name), list(self.g.get_repos()))))))    
         }
 
+    def get_all_commits(self, repo_name):
+        return list(map(lambda commit: commit.sha, self.g.get_repo(repo_name).get_commits(author=self.name)))
 
-# print(User(sys.argv[1]).info())
+
+# print(User(sys.argv[1]).get_all_commits(sys.argv[2]))

@@ -1,7 +1,13 @@
 {
     "Backend" : {
         "Spark" : ["spark.Spark"],
-        "Spring" : ["org.springframework"]
+        "Spring" : ["org.springframework"],
+        "RabbitMQ" : ["com.rabbitmq"],
+        "Kafka": ["org.apache.kafka"],
+        "Jetty": ["org.eclipse.jetty"],
+        "tomcat" : ["org.apache.tomcat"],
+        "elasticsearch": ["org.elasticsearch"],
+        "hadoop": ["org.apache.hadoop"]
     },
     "Desktop" : {
         "Swing" : ["javax.swing"],
@@ -9,16 +15,18 @@
         "JFeonix" : ["com.jfoenix"]
     },
     "Frontend" : {
+        "Vaadin": ["com.vaadin"],
         "GWT" : ["com.google.gwt"]
     },
     "Mobile" : {
-        "Android" : ["android"],
+        "Android" : ["android", "kotlinx.android"],
         "Microedition" : ["javax.microedition"]
     },
-    "Machine Learning" : {
+    "Data science" : {
         "Flink" : ["org.apache.flink"],
         "Mahout" : ["org.apache.mahout"],
         "Spark" : ["org.apache.spark"],
-        "Deeplearning4j" : ["org.deeplearning4j", "org.datavec"]
+        "Deeplearning4j" : ["org.deeplearning4j", "org.datavec"],
+        "KotlinStatistics" : ["org.nield.kotlinstatistics"]
     }
 }
