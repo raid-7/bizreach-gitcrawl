@@ -37,7 +37,6 @@ with open('skills.json') as file:
                 prefix_to_framework[prefix] = framework
                 framework_to_skill[framework] = skill
 
-    # framework_to_skill["Library developer"] = "Library developer"
     id_to_framework = list(framework_to_skill.keys())
     framework_to_id = {framework : i for (i, framework) in enumerate(id_to_framework)}
 
@@ -65,7 +64,7 @@ class User:
         self.g = Github(access_token).get_user(name)
         self.name = name
         self.files = defaultdict(lambda: np_zeros(len(id_to_framework)))
-        self.repos = defaultdict(lambda: set())
+        self.repos = defaultdict(set)
 
 
     def best_skills(self):
@@ -133,7 +132,6 @@ class User:
         return [{'login': login, 'info': info} for (login, info) in result.items() if len(info) > 0]
 
     def try_get_commits(self, repo):
-        print('TGC', repo)
         try:
             return list(repo.get_commits(author=self.name))
         except GithubException:
@@ -157,7 +155,3 @@ class User:
     def get_repo_complexities(self, repo_name):
         repo_root = clone_repo(self.name, repo_name, shallow=False)
         return calculate_filtered(repo_root, self.get_all_commits(repo_name))
-
-
-
-# print(User(sys.argv[1]).get_all_commits(sys.argv[2]))

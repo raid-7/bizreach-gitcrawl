@@ -175,15 +175,23 @@ $(document).ready(function() {
         let i = 0;
 
         let mean = 0;
+        let lowest = 99999;
+        let highest = 0;
+
         for (let c of cmpx) {
             console.log(c);
             mean += c.complexity;
+            lowest = Math.min(lowest, c.complexity);
+            highest = Math.max(highest, c.complexity);
         }
         mean /= cmpx.length;
 
+        let delta = Math.max(Math.max(highest - mean, mean - lowest), 11);
+
         let cmpxChanged = cmpx.map((c) => ({
             name: (c.complexity > mean / 2 ? c.name : ""),
-            complexity: c.complexity
+            complexity: c.complexity,
+            color: d3.rgb(128, 255 - Math.floor(Math.abs(mean - c.complexity) * 255. / delta), 0)
         }));
         console.log(cmpxChanged);
 
@@ -209,7 +217,7 @@ $(document).ready(function() {
           .attr("id", d => (d.leafUid = ("" + i++)).id)
           .attr("r", d => d.r)
           .attr("fill-opacity", 0.7)
-          .attr("fill", d => 'red');
+          .attr("fill", d => d.data.color);
 
         leaf.append("clipPath")
           .attr("id", d => (d.clipUid = ("" + i++)).id)
@@ -226,9 +234,11 @@ $(document).ready(function() {
           .text(d => d);
 
         leaf.append("title")
-          .text(d => `${d.data.title}\n${d.value}`);
+          .text(d => `${d.data.name}\nWMC metric = ${d.data.complexity}`);
 
         let chart = svg.node();
+
+        cont.append("text").text("CODE QUALITY");
         cont.append(chart);
 
         chart.style.width = width + "px";

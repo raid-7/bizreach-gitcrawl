@@ -71,6 +71,9 @@ body {
 
 #repo-complexities-container {
     max-width: 800px;
+    text-align: center;
+    font-family: "Courier New";
+    font-size: 18px;
 }
 
 #main-content {
