@@ -1,7 +1,6 @@
 import os
 import sys
 import json
-import numpy as np
 import subprocess
 from github import Github
 from config import ACCESS_TOKEN
@@ -43,11 +42,29 @@ with open('skills.json') as file:
     framework_to_id = {framework : i for (i, framework) in enumerate(id_to_framework)}
 
 
+def np_zeros(n):
+    return [0 for _ in range(n)]
+
+def np_normalize_inplace(xs):
+    s = sum(xs)
+    for i in range(len(xs)):
+        xs[i] /= s
+
+def np_average(xss, weights):
+    n = len(xss[0])
+    result = np_zeros(n)
+    for xs, w in zip(xss, weights):
+        for i in range(n):
+            result[i] += w * xs[i]
+    s = sum(weights)
+    return [x / s for x in result]
+
+
 class User:
     def __init__(self, name, access_token=ACCESS_TOKEN):
         self.g = Github(access_token).get_user(name)
         self.name = name
-        self.files = defaultdict(lambda: np.zeros(len(id_to_framework)))
+        self.files = defaultdict(lambda: np_zeros(len(id_to_framework)))
         self.repos = defaultdict(lambda: set())
 
 
@@ -68,10 +85,7 @@ class User:
                                         self.repos[framework_to_skill[framework]].add(repo.name)
 
                         if filename in self.files:
-                            self.files[filename] /= self.files[filename].sum()
-                        # else:
-                        #     self.files[filename][-1] = 1.
-                        #     self.repos["Library developer"].add(repo.name)
+                            np_normalize_inplace(self.files[filename])
         if len(self.files) == 0:
             return {
                 "Other": {
@@ -79,7 +93,7 @@ class User:
                 }
             }
 
-        weights = {name : 0 for name in self.files}
+        weights = {name: 0 for name in self.files}
         for repo in filter(lambda rep: rep.language == 'Java' or rep.language == 'Kotlin', self.g.get_repos()):
             for commit in repo.get_commits(author=self.name):
                 for file in commit.files:
@@ -88,7 +102,7 @@ class User:
                         weights[filename] += (commit.stats.deletions + commit.stats.additions)
 
         try:
-            result = np.average(list(self.files.values()), axis=0, weights=list(weights.values()))
+            result = np_average(list(self.files.values()), weights=list(weights.values()))
         except ZeroDivisionError:
             return {
                 "Other": {
