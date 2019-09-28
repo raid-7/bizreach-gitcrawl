@@ -3,5 +3,4 @@ __pycache__
 cache
 /dist
 .gitignore
-pmd_ruleset.xml
 Dockerfile
