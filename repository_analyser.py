@@ -7,6 +7,12 @@ from github import Github
 import datetime
 
 
+
+def get_github():
+    with open("credentials.txt", "rt") as f:
+        cred = f.read().strip()
+    return Github(cred)
+
 with open('skills.json') as file:
     skills = json.load(file)
 
@@ -21,8 +27,8 @@ with open('skills.json') as file:
 
 
 class User:
-    def __init__(self, name, access_token='28fdbf1314305fe2a24ddd15882df1513dd174a1'):
-        self.g = Github(access_token).get_user(name)
+    def __init__(self, name):
+        self.g = get_github().get_user(name)
         self.name = name
         self.files = dict()
         self.frameworks = dict()
