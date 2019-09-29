@@ -1,6 +1,4 @@
-credentials.txt
 __pycache__
-config.py
-cache
+/config.py
+/cache
 /dist
-pmd_ruleset.xml
